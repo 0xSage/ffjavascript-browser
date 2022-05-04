@@ -1592,20 +1592,19 @@ class ChaCha {
 
 function getRandomBytes(n) {
     let array = new Uint8Array(n);
-    if (process.browser) { // Browser
-        console.log("ffjavascript/random.js: Is a browser");
-        if (typeof globalThis.crypto !== "undefined") { // Supported
-            globalThis.crypto.getRandomValues(array);
-        } else { // fallback
-            for (let i = 0; i < n; i++) {
-                array[i] = (Math.random() * 4294967296) >>> 0;
-            }
+
+    if (typeof globalThis.crypto !== "undefined") { // Supported
+        globalThis.crypto.getRandomValues(array);
+    } else { // fallback
+        for (let i = 0; i < n; i++) {
+            array[i] = (Math.random() * 4294967296) >>> 0;
         }
     }
-    else { // WebCrypto
-        console.log("ffjavascript/random.js: Not a browser?!");
-        crypto.subtle.getRandomValues(array);
-    }
+
+    // else { // WebCrypto
+    //     console.log("ffjavascript/random.js: Not a browser?!");
+    //     crypto.subtle.getRandomValues(array);
+    // }
     return array;
 }
 
@@ -5166,11 +5165,7 @@ function sleep(ms) {
 }
 
 function stringToBase64(str) {
-    if (process.browser) {
-        return globalThis.btoa(str);
-    } else {
-        return Buffer.from(str).toString("base64");
-    }
+    return globalThis.btoa(str);
 }
 
 const threadSource = stringToBase64("(" + thread.toString() + ")(self)");

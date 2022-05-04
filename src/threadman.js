@@ -40,11 +40,7 @@ function sleep(ms) {
 }
 
 function stringToBase64(str) {
-    if (process.browser) {
-        return globalThis.btoa(str);
-    } else {
-        return Buffer.from(str).toString("base64");
-    }
+    return globalThis.btoa(str);
 }
 
 const threadSource = stringToBase64("(" + thread.toString() + ")(self)");
