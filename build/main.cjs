@@ -3,17 +3,13 @@
 Object.defineProperty(exports, '__esModule', { value: true });
 
 var bigInt = require('big-integer');
-var crypto = require('crypto');
 var wasmcurves = require('wasmcurves');
-var os = require('os');
 var Worker = require('web-worker');
 var wasmbuilder = require('wasmbuilder');
 
 function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
 var bigInt__default = /*#__PURE__*/_interopDefaultLegacy(bigInt);
-var crypto__default = /*#__PURE__*/_interopDefaultLegacy(crypto);
-var os__default = /*#__PURE__*/_interopDefaultLegacy(os);
 var Worker__default = /*#__PURE__*/_interopDefaultLegacy(Worker);
 
 /* global BigInt */
@@ -1597,16 +1593,18 @@ class ChaCha {
 function getRandomBytes(n) {
     let array = new Uint8Array(n);
     if (process.browser) { // Browser
+        console.log("ffjavascript/random.js: Is a browser");
         if (typeof globalThis.crypto !== "undefined") { // Supported
             globalThis.crypto.getRandomValues(array);
         } else { // fallback
-            for (let i=0; i<n; i++) {
-                array[i] = (Math.random()*4294967296)>>>0;
+            for (let i = 0; i < n; i++) {
+                array[i] = (Math.random() * 4294967296) >>> 0;
             }
         }
     }
-    else { // NodeJS
-        crypto__default["default"].randomFillSync(array);
+    else { // WebCrypto
+        console.log("ffjavascript/random.js: Not a browser?!");
+        crypto.subtle.getRandomValues(array);
     }
     return array;
 }
@@ -1615,7 +1613,7 @@ function getRandomSeed() {
     const arr = getRandomBytes(32);
     const arrV = new Uint32Array(arr.buffer);
     const seed = [];
-    for (let i=0; i<8; i++) {
+    for (let i = 0; i < 8; i++) {
         seed.push(arrV[i]);
     }
     return seed;
@@ -5156,7 +5154,7 @@ const MEM_SIZE = 25;  // Memory size in 64K Pakes (1600Kb)
 
 class Deferred {
     constructor() {
-        this.promise = new Promise((resolve, reject)=> {
+        this.promise = new Promise((resolve, reject) => {
             this.reject = reject;
             this.resolve = resolve;
         });
@@ -5183,7 +5181,7 @@ const workerSource = "data:application/javascript;base64," + threadSource;
 async function buildThreadManager(wasm, singleThread) {
     const tm = new ThreadManager();
 
-    tm.memory = new WebAssembly.Memory({initial:MEM_SIZE});
+    tm.memory = new WebAssembly.Memory({ initial: MEM_SIZE });
     tm.u8 = new Uint8Array(tm.memory.buffer);
     tm.u32 = new Uint32Array(tm.memory.buffer);
 
@@ -5217,7 +5215,7 @@ async function buildThreadManager(wasm, singleThread) {
             init: MEM_SIZE,
             code: tm.code.slice()
         }]);
-        tm.concurrency  = 1;
+        tm.concurrency = 1;
     } else {
         tm.workers = [];
         tm.pendingDeferreds = [];
@@ -5225,31 +5223,32 @@ async function buildThreadManager(wasm, singleThread) {
 
         let concurrency;
 
-        if ((typeof(navigator) === "object") && navigator.hardwareConcurrency) {
+        if ((typeof (navigator) === "object") && navigator.hardwareConcurrency) {
             concurrency = navigator.hardwareConcurrency;
         } else {
-            concurrency = os__default["default"].cpus().length;
+            // const os = require("os");
+            concurrency = 0;
         }
 
-        if(concurrency == 0){
+        if (concurrency == 0) {
             concurrency = 2;
         }
 
         // Limit to 64 threads for memory reasons.
-        if (concurrency>64) concurrency=64;
+        if (concurrency > 64) concurrency = 64;
         tm.concurrency = concurrency;
 
-        for (let i = 0; i<concurrency; i++) {
+        for (let i = 0; i < concurrency; i++) {
 
             tm.workers[i] = new Worker__default["default"](workerSource);
 
             tm.workers[i].addEventListener("message", getOnMsg(i));
 
-            tm.working[i]=false;
+            tm.working[i] = false;
         }
 
         const initPromises = [];
-        for (let i=0; i<tm.workers.length;i++) {
+        for (let i = 0; i < tm.workers.length; i++) {
             const copyCode = wasm.code.slice();
             initPromises.push(tm.postAction(i, [{
                 cmd: "INIT",
@@ -5264,15 +5263,15 @@ async function buildThreadManager(wasm, singleThread) {
     return tm;
 
     function getOnMsg(i) {
-        return function(e) {
+        return function (e) {
             let data;
-            if ((e)&&(e.data)) {
+            if ((e) && (e.data)) {
                 data = e.data;
             } else {
                 data = e;
             }
 
-            tm.working[i]=false;
+            tm.working[i] = false;
             tm.pendingDeferreds[i].resolve(data);
             tm.processWorks();
         };
@@ -5310,7 +5309,7 @@ class ThreadManager {
     }
 
     processWorks() {
-        for (let i=0; (i<this.workers.length)&&(this.actionQueue.length > 0); i++) {
+        for (let i = 0; (i < this.workers.length) && (this.actionQueue.length > 0); i++) {
             if (this.working[i] == false) {
                 const work = this.actionQueue.shift();
                 this.postAction(i, work.data, work.transfers, work.deferred);
@@ -5346,7 +5345,7 @@ class ThreadManager {
     }
 
     getBuff(pointer, length) {
-        return this.u8.slice(pointer, pointer+ length);
+        return this.u8.slice(pointer, pointer + length);
     }
 
     setBuff(pointer, buffer) {
@@ -5361,8 +5360,8 @@ class ThreadManager {
     }
 
     async terminate() {
-        for (let i=0; i<this.workers.length; i++) {
-            this.workers[i].postMessage([{cmd: "TERMINATE"}]);
+        for (let i = 0; i < this.workers.length; i++) {
+            this.workers[i].postMessage([{ cmd: "TERMINATE" }]);
         }
         await sleep(200);
     }

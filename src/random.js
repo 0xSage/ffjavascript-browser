@@ -1,19 +1,20 @@
 import ChaCha from "./chacha.js";
-import crypto from "crypto";
 
 export function getRandomBytes(n) {
     let array = new Uint8Array(n);
     if (process.browser) { // Browser
+        console.log("ffjavascript/random.js: Is a browser");
         if (typeof globalThis.crypto !== "undefined") { // Supported
             globalThis.crypto.getRandomValues(array);
         } else { // fallback
-            for (let i=0; i<n; i++) {
-                array[i] = (Math.random()*4294967296)>>>0;
+            for (let i = 0; i < n; i++) {
+                array[i] = (Math.random() * 4294967296) >>> 0;
             }
         }
     }
-    else { // NodeJS
-        crypto.randomFillSync(array);
+    else { // WebCrypto
+        console.log("ffjavascript/random.js: Not a browser?!");
+        crypto.subtle.getRandomValues(array);
     }
     return array;
 }
@@ -22,7 +23,7 @@ export function getRandomSeed() {
     const arr = getRandomBytes(32);
     const arrV = new Uint32Array(arr.buffer);
     const seed = [];
-    for (let i=0; i<8; i++) {
+    for (let i = 0; i < 8; i++) {
         seed.push(arrV[i]);
     }
     return seed;

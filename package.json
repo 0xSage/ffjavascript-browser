@@ -1,7 +1,7 @@
 {
-  "name": "ffjavascript",
+  "name": "ffjavascript-browser",
   "type": "module",
-  "version": "0.2.52",
+  "version": "0.0.1",
   "description": "Finite Field Library in Javascript",
   "main": "./build/main.cjs",
   "module": "./main.js",
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/iden3/ffjavascript.git"
+    "url": "https://github.com/0xSage/ffjavascript-browser.git"
   },
   "keywords": [
     "Finite",
